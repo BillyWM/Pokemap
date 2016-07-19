@@ -7,6 +7,14 @@
 <script type="text/javascript" src="pokemonList.js"></script>
 
 <script type="text/javascript">
+	
+	var map;
+
+	//List of displayed markers
+	var shown = [];
+
+	var exclude = ["pidgey", "rattata"];
+
 	function initialize() {
 		var centerlatlng = new google.maps.LatLng(38.707102, -121.128119);
 		var myOptions = {
@@ -14,8 +22,97 @@
 			center: centerlatlng,
 			mapTypeId: google.maps.MapTypeId.ROADMAP
 		};
-		var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
+		map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+		google.maps.event.addListener(map, 'idle', showMarkers);
+	}
+
+	function showMarkers() {
+		var bounds = map.getBounds();
+		var southWest = bounds.getSouthWest();
+		var northEast = bounds.getNorthEast();
+		var minLat = southWest.lat();
+		var maxLat = northEast.lat();
+		var minLon = southWest.lng();
+		var maxLon = northEast.lng();
+
+		var markers = getMarkersInRange(minLon, maxLon, minLat, maxLat);
+		clearAllMarkers();
+		setMarkers(markers);
+	}
+
+	/**
+	 * Add an array of markers to the map
+	 */
+	function setMarkers(markers) {
+		if (!markers) {
+			console.warn("No markers to show");
+			return;
+		}
+
+		var mark;
+		for (var i=0; i < markers.length; i++) {
+			mark = markers[i];
+			mark.setMap(map);
+			shown.push(mark);
+		}
+	}
+
+	/**
+	 * Retrieve markers within a bounding box
+	 */
+	function getMarkersInRange(minLon, maxLon, minLat, maxLat) {
+		var poke;
+		var out = [];
+		var marker;
+		for (var i=0; i < pokemonList.length; i++) {
+			poke = pokemonList[i];
+			
+			//Check whether Pokemon is in bounding box defined by the viewable coords
+			if ((poke.lat > minLat && poke.lat < maxLat) && (poke.lng > minLon && poke.lng < maxLon)) {
+
+				//Don't show excluded Pokemon
+				if (!isExcludedPokemon(poke.name)) {
+					marker = makeMarker(poke.name, poke.lat, poke.lng);
+					out.push(marker);
+				}
+			}
+		}
+
+		return out;
+	}
+
+	function isExcludedPokemon(name) {
+		return exclude.indexOf(name) > -1;
+	}
+
+	/**
+	 * Create a marker object from Pokemon location data
+	 */
+	function makeMarker(name, lat, lng) {
+		var latlng = new google.maps.LatLng(lat, lng);
+		//Show Nidorans. God knows why.
+		var imgName = name.replace(" ", "-");
+		var image = new google.maps.MarkerImage('https://img.pokemondb.net/sprites/black-white/normal/' + imgName + '.png');
+		var marker = new google.maps.Marker({
+			title: name,
+			icon: image,
+			position: latlng
+		});
+
+		return marker;
+	}
+
+	function clearAllMarkers() {
+		var mark;
+		while (shown.length) {
+			mark = shown.pop();
+			mark.setMap(null);
+		}
+	}
+
+	function showAll() {
 		var poke, imgName;
 		for (var i=0; i < pokemonList.length; i++) {
 			poke = pokemonList[i];
@@ -30,7 +127,8 @@
 			});
 			marker.setMap(map);
 		}
-}
+	}
+
 </script>
 </head>
 <body style="margin:0px; padding:0px;" onload="initialize()">
