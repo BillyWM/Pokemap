@@ -16,11 +16,13 @@
 		};
 		var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
-		var poke;
+		var poke, imgName;
 		for (var i=0; i < pokemonList.length; i++) {
 			poke = pokemonList[i];
 			var latlng = new google.maps.LatLng(poke.lat, poke.lng);
-			var img = new google.maps.MarkerImage('https://img.pokemondb.net/sprites/black-white/normal/' + poke.name + '.png');
+			//Show Nidorans. God knows why.
+			imgName = poke.name.replace(" ", "-");
+			var img = new google.maps.MarkerImage('https://img.pokemondb.net/sprites/black-white/normal/' + imgName + '.png');
 			var marker = new google.maps.Marker({
 				title: poke.name,
 				icon: img,
